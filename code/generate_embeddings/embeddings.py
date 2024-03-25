@@ -108,7 +108,7 @@ def save_model(model: FastText, output_file: str) -> None:
 
 def create_document_embeddings(pmids: list, documents: list, model, output_dir_path: str) -> None:
     """
-    Generates document embeddings from the generated Word2Vec model.
+    Generates document embeddings from the generated fastText model.
     Parameters
     ----------
     accessions : list
