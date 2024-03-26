@@ -40,7 +40,7 @@ def objective_wrapper(args):
         }
 
         # Assume run() trains the model and returns the path to a file with similarity scores
-        similarity_file = run(params, args, tuning = False) #False uses Test split; True uses Validation split
+        similarity_file = run(params, args, trial.number, tuning = False) #False uses Test split; True uses Validation split
         
         ref_pmids, data = precision.read_file(similarity_file)
         vector = precision.generate_vector(ref_pmids, data, args.classes)
@@ -50,11 +50,13 @@ def objective_wrapper(args):
         return precision_5
     return objective
 
-def run_optuna_optimization(args, n_trials=1, n_jobs=1):
-    study = optuna.create_study(direction='maximize')
+def run_optuna_optimization(args, n_trials=10, n_jobs=1):
+    study = optuna.create_study(direction='maximize', pruner=optuna.pruners.MedianPruner())
     with tqdm(total=n_trials) as pbar:
         def callback(study, trial):
             pbar.update(1)
+            if trial.state == optuna.trial.TrialState.PRUNED:
+                logging.info("Trial {} pruned.".format(trial.number))  # Log pruned trial
         study.optimize(objective_wrapper(args), n_trials=n_trials, callbacks=[callback], n_jobs=n_jobs)
     print('Best trial:', study.best_trial.params)
     logging.info('Best trial: %s', study.best_trial.params)

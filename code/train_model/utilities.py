@@ -97,51 +97,6 @@ def save_model(model: FastText, output_file: str) -> None:
     """
     model.save(output_file)
     
-# # Create and train the Doc2Vec Model
-# def createDoc2VecModel(pmids: List[str], docs: List[List[str]], params: dict) -> Doc2Vec:
-#     """
-#     Create and train the Doc2Vec model using Gensim for the documents 
-#     in the corpus.
-
-#     Parameters
-#     ----------
-#     pmids: List[str]
-#             A list of all pubmed ids in the corpus.
-#     docs: List[List[str]]
-#             A list of lists where each sub-list contains the words 
-#             in the cleaned/processed document (title + abstract).
-#     params: dict
-#             Dictionary containing the parameters for the Doc2Vec model.
-#     Returns
-#     -------
-#     model: Doc2Vec
-#             Doc2Vec model.
-#     """
-#     tagged_data = [TaggedDocument(words=_d, tags=[str(pmids[i])])
-#                    for i, _d in enumerate(docs)]
-
-#     # model = Doc2Vec(vector_size=200, window=5, min_count=1, epochs=5)
-#     model = Doc2Vec(**params)
-#     model.build_vocab(tagged_data)
-#     model.train(tagged_data, total_examples=model.corpus_count,
-#                 epochs=model.epochs)
-
-#     return model
-
-# Save the Doc2Vec Model
-# def saveDoc2VecModel(model: Doc2Vec, output_file: str) -> None:
-#     """
-#     Saves the Doc2Vec model.
-
-#     Parameters
-#     ----------
-#     model: Doc2Vec
-#             Doc2Vec model.
-#     output_file: str
-#             File path of the Doc2Vec model generated.
-#     """
-#     model.save(output_file)
-
 def calculate_cosine_similarity(vec1, vec2):
     return 1 - cosine(vec1, vec2)
 
@@ -182,13 +137,48 @@ def get_similarity_scores(input_relevance_matrix, embeddings, output_matrix_name
     relevance_matrix_df.to_csv(output_matrix_name, index=False, sep="\t")
     logging.info('Saved matrix')
 
-def generate_embeddings(model, pmids, docs, output_file):
-    embeddings_list = []
-    for doc in docs:
-        # Infer vector for each document
-        vector = model.infer_vector(doc)
-        embeddings_list.append(vector)
-    save_embeddings_to_pickle(pmids, embeddings_list, output_file)
+def create_document_embeddings(pmids: list, documents: list, model, output_dir_path: str) -> None:
+    """
+    Generates document embeddings from the generated fastText model.
+    Parameters
+    ----------
+    accessions : list
+        List of accession numbers.
+    documents : list
+        List of function comments.
+    model : 
+        Pretraine Fasttext model.
+    output_dir_path: str
+        File path for the generated embeddings.
+    """
+    document_embeddings = []
+
+    for index in range(len(pmids)):
+        embeddings_list = []
+        for word in documents[index]:
+            try:
+                embeddings_list.append(model.wv[word])
+            except:
+                continue
+        #  Generate document embeddings from word embeddings
+        first = True
+        document = []
+        for embedding in embeddings_list:
+            if first:
+                for dimension in embedding:
+                    document.append(0.0)
+                first = False
+            doc_dimension = 0
+            for dimension in embedding:
+                document[doc_dimension] += dimension
+                doc_dimension += 1
+        doc_dimension = 0
+        for dimension in document:
+            # Get the average of each dimension of the embeddings and store it in the document list
+            document[doc_dimension] = (dimension / len(embeddings_list))
+            doc_dimension += 1
+        document_embeddings.append(document)
+    save_embeddings_to_pickle(pmids, document_embeddings, output_dir_path)
 
 def save_embeddings_to_pickle(pmids, embeddings_list, output_file):
     data = {"PID": pmids, "Embedding": embeddings_list}
