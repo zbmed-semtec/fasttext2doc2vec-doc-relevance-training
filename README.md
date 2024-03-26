@@ -1,6 +1,6 @@
 # FastText2Doc2Vec-Doc-relevance
 
-This repository focuses on an approach exploring and assessing literature-based doc-2-doc recommendations using the fastText algorithm with its application to the RELISH dataset.
+This repository focuses on an approach exploring and assessing literature-based doc-2-doc recommendations using the fastText algorithm with its application to the RELISH dataset. The workflow involves training the fastText models on a specified training set and then evaluating the document-to-document recommendations on a separate test set. Additionally, we employ Optuna for optimizing the hyperparameters for the trained fastText models.
 
 ## Table of Contents
 
@@ -8,17 +8,12 @@ This repository focuses on an approach exploring and assessing literature-based 
 2. [Input Data](#input-data)
 3. [Pipeline](#pipeline)
     1. [Generate Embeddings](#generate-embeddings)
-        - [Using Pre-trained fastText model](#using-pre-trained-fasttext-model)
-        - [Training our own fastText models](#generate-and-train-fasttext-models)
-          - [Parameters](#parameters)
-    2. [Format embeddings](#format-embeddings)
-    3. [Calculate Cosine Similarity](#calculate-cosine-similarity)
-    4. [Hyperparameter Optimization](#hyperparameter-optimization)
-    5. [Evaluation](#evaluation)
+    2. [Train and Optimize fastText models](#train-and-optimize-fasttext-models)
+    3. [Cosine Similarity Computation](#cosine-similarity-computation)
+    2. [Evaluation](#evaluation)
         - [Precision@N](#precisionn)
         - [nDCG@N](#ndcgn)
-8. [Getting Started](#getting-started)
-9. [Tutorial](#tutorial)
+4. [Getting Started](#getting-started)
 
 ## About
 
@@ -34,6 +29,12 @@ This section outlines the progression from generating document embeddings to con
 ### Generate Embeddings
 The following section outlines the process of generating document-level embeddings for each PMID of the RELISH corpus using either the pre-trained fastText model or by training our own fastText models. We employ the parameters shown below in order to generate our models.
 
+### Train and Optimize fastText models
+We create and train Doc2Vec models with customizable hyperparameters to comprehend the connections between documents and words in a high-dimensional vector space. We aim to optimize these hyperparameters to establish the most effective relationship between cosine similarity and document relevance.
+
+To accomplish this we begin by splitting the dataset into a training set and a testing set. The training set is then used to train the fastText model, where we explore various hyperparameters to optimize its performance. This optimization process is crucial for enhancing the model's ability to capture meaningful relationships between cosine similarity and document relevance. For each set of hyperparameters, a fastText model is trained on the training split.
+
+Following this, we evaluate the model's performance on the testing set using Precision@5 as our evaluation metric.
 
 ##### Parameters
 
@@ -43,14 +44,9 @@ The following section outlines the process of generating document-level embeddin
 + **epochs:** Refers to the number of iterations over the training dataseta and is set at 15 in this context.
 + **min_count:** It is the minimum number of appearances a word must have to not be ignored by the algorithm and is configured at a minimum of 5.
 
-## Format embeddings
-After model training, we can extract document-level embeddings. These embeddings are numerical vectors that represent the content and context of each document in a continuous vector space. These embeddings are stored by the model, associated with each PMID. For further downstream document similarity calculations, we format and save these embeddings for each document with its PMID as a dataframe in a pickle file. Each specific set of hyperparameter combination results in having a separate pickle file.
+### Cosine Similarity Computation
 
-## Calculate Cosine Similarity
-To assess the similarity between two documents within the RELISH corpus, we employ the Cosine Similarity metric. This process enables the generation of a 4-column matrix containing cosine similarity scores for existing pairs of PMIDs within our corpus. For a more detailed explanation of the process, please refer to this [documentation](https://github.com/zbmed-semtec/medline-preprocessing/tree/main/code/Cosine_Similarity).
-
-## Hyperparameter Optimization
-*To be written*
+Following hyperparameter optimization where the best model gets saved, embeddings are generated for the test dataset using this trained model. Subsequently, cosine similarity is calculated for the test dataset embeddings, providing a measure of similarity between pairs of documents based on their learned representations.
 
 ## Evaluation
 
@@ -73,12 +69,12 @@ First, clone the repository to your local machine using the following command:
 
 ###### Using HTTP:
 
-`git clone https://github.com/zbmed-semtec/fasttext2doc2vec-doc-relevance.git`
+`git clone https://github.com/zbmed-semtec/fasttext2doc2vec-doc-relevance-training.git`
 
 ###### Using SSH:
 Ensure you have set up SSH keys in your GitHub account.
 
-`git clone git@github.com:zbmed-semtec/fasttext2doc2vec-doc-relevance.git`
+`git clone git@github.com:zbmed-semtec/fasttext2doc2vec-doc-relevance-training.git`
 
 
 ### Step 2: Create a virtual environment and install dependencies
@@ -107,128 +103,42 @@ To deactivate the virtual environment after running the project, run the followi
 ```
 deactivate
 ```
+### Step 3: Dataset
 
-### Step 3: Generate Embeddings
+- Download the dataset from this link: [Split_Dataset](https://drive.google.com/drive/folders/1Bq_U5207utn7tvSt_HLVdOdYR5QW7MMN)
+- Keep the data in the below-specified format
 
-#### Using Pre-trained model:
-1. Clone the FastText repository:
+![image](/docs/dataset_structure.png)
+
+### Step 4: Optimization Pipeline
+
+This pipeline aims to optimize hyperparameters for a fastText model using Optuna, train the model with the optimal parameters, and evaluate its performance using precision at N (Precision@N) and normalized discounted cumulative gain (NDCG) metrics.
+
+Pipeline Steps:
+Hyperparameter Optimization: Utilizes Optuna to search for the best hyperparameters for the fastText model.
+Model Training: Trains the fastText model with the optimal hyperparameters using 80% of the training split data.
+Embedding Generation: Generates embeddings for the remaining 20% of the test split data using the trained model.
+Cosine Similarity Computation: Calculates cosine similarities for the generated embeddings.
+Precision@N Calculation: Computes Precision@N scores, a measure of the relevance of retrieved documents, for the obtained cosine similarities.
+NDCG Score Calculation: Computes normalized discounted cumulative gain (NDCG) scores, which assesses the quality of ranked search results based on relevance assessments.
+
+In order to start the pipeline execution use this script, and run the following command:
 
  ``` 
-$ git clone https://github.com/facebookresearch/fastText.git
-$ cd fastText
-$ make
+python3 code/train_model/main.py [-i INPUT] [-v VALIDATION_FILE] [-t TEST_FILE] [-gv VALIDATION_GROUND_TRUTH] [-gt TEST_GROUND_TRUTH] [-c NO_OF CLASSES]
  ``` 
 
-2. Once the FastText is successfully built, navigate to the FastText directory and execute the following command to download the English model:
+ You must pass the following four arguments:
 
-``` 
-$ ./download_model.py en
-``` 
-
-3. After the download is complete, you will find the **'cc.en.300.bin.gz'** model file located in the FastText directory, accessible at the following path:
-
-``` 
-'./fastText/cc.en.300.bin.gz'
-``` 
-
-4. In order to generate embeddings using the pre-trained model, please execute the [`embeddings.py`](/code/generate_embeddings/embeddings.py) script as shown below. This script uses the RELISH Tokenized npy file. Make sure to have the RELISH Tokenized.npy file within the directory under the data folder.
-
-```
-python3 code/generate_embeddings/embeddings.py --input data/RELISH_tokenized.npy --pre_trained_model fastText/cc.en.300.bin.gz --output data/pre_trained_model_embeddings.pkl
-```
-
-
-
-#### Training our own models:
-
-The [`run_embeddings.py`](/code/generate_embeddings/run_embeddings.py) script uses the RELISH Tokenized npy file as input and includes a default parameter dictionary with preset hyperparameters. You can easily adapt it for different values and parameters by modifying the `params_dict`. Make sure to have the RELISH Tokenized.npy file within the directory under the data folder.
+-i/ --input : File path to the RELISH Train split dataset (.npy file format).
+-v/ --valid : File path to the RELISH Validation split dataset (.npy file format).
+-t/ --test : File path to the RELISH Test split dataset (.npy file format).
+-gv/ --valid_ground_truth : File path for the Validation split ground truth (.tsv file format).
+-gt/ --test_ground_truth : File path for the Test split ground truth (.tsv file format).
+-c/ --classes : No. of classes to perform optimization on (Integer 2 or 3/ Default value is 3).
 
 To run this script, please execute the following command:
 
-```
-python3 code/generate_embeddings/run_embeddings.py --input "data/RELISH_tokenized.npy"
-```
-
-The script will create fastText models, generate embeddings, and store them in separate directories. You should expect to find a total of 18 files corresponding to the various models, embeddings, and embedding pickle files.
-
-### Step 4: Calculate Cosine Similarity
-In order to generate the cosine similarity matrix and execute this [script](/code/evaluation/generate_cosine_existing_pairs.py), run the following command:
-
-```
-python3 code/evaluation/generate_cosine_existing_pairs.py [-i INPUT] [-e EMBEDDINGS] [-o OUTPUT] [-c CORPUS]
-```
-
-You must pass the following four arguments:
-
-+ -i/ --input : File path to the RELISH relevance matrix in the TSV format.
-+ -e/ --embeddings : File path to the embeddings in the pickle file format.
-+ -o/ --output : File path for the output 4 column cosine similarity matrix.
-+ -c / --corpus : Name of the corpus (RELISH).
-
-
-For example, if you are running the code from the code folder and have the RELISH relevance matrix in the data folder, run the cosine matrix creation for the first hyperparameter as:
-
-```
-python3 code/evaluation/generate_cosine_existing_pairs.py -i data/RELISH/Relevance_Matrix/RELISH.tsv -e dataframe/embeddings_pickle_0.tsv -o data/cosine_similarity_0.tsv -c RELISH
-```
-
-
-### Step 5: Hyperparameter Optimization
-
-**_To be written_**
-
-### Step 6: Precision@N
-In order to calculate the Precision@N scores and execute this [script](/code/evaluation/precision.py), run the follwing command:
-
-```
-python3 code/evaluation/precision.py [-c COSINE FILE PATH]  [-o OUTPUT PATH]
-```
-
-You must pass the following two arguments:
-
-+ -c/ --cosine_file_path: path to the 4-column cosine similarity existing pairs RELISH file: (tsv file)
-+ -o/ --output_path: path to save the generated precision matrix: (tsv file)
-
-For example, if you are running the code from the code folder and have the cosine similarity TSV file in the data folder, run the precision matrix creation for the first hyperparameter as:
-
-```
-python3 code/evalutaion/precision.py -c data/cosine_similarity_0.tsv -o data/precision_fasttext_0.tsv
-```
-
-
-### Step 7: nDCG@N
-In order to calculate nDCG scores and execute this [script](/code/evaluation/calculate_gain.py), run the following command:
-
-```
-python3 code/evaluation/calculate_gain.py [-i INPUT]  [-o OUTPUT]
-```
-
-You must pass the following two arguments:
-
-+ -i / --input: Path to the 4 column cosine similarity existing pairs RELISH TSV file.
-+ -o/ --output: Output path along with the name of the file to save the generated nDCG@N TSV file.
-
-For example, if you are running the code from the code folder and have the 4 column RELISH TSV file in the data folder, run the matrix creation for the first hyperparameter as:
-
-```
-python3 code/evaluation/calculate_gain.py -i data/cosine_similarity_0.tsv -o data/ndcg_fasttext_0.tsv
-```
-
-
-### Step 8: Compile Results
-
-In order to compile the average result values for Precison@ and nDCG@N and generate a single TSV file each, please use this [script](code/evaluation/show_avg.py).
-
-You must pass the following two arguments:
-
-+ -i / --input: Path to the directory consisting of all the precision matrices/gain matrices.
-+ -o/ --output: Output path along with the name of the file to save the generated compiled Precision@N / nDCG@N TSV file.
-
-
-If you are running the code from the code folder, run the compilation script as:
-
-```
-python3 code/evaluation/show_avg.py -i data/output/gain_matrices/ -o data/output/results_gain.tsv
-```
-
-NOTE: Please do not forget to put a `'/'` at the end of the input file path.
+ ``` 
+python3 code/train_model/main.py -i data/Split_Dataset/Data/Train/relish_train_tokens_removed_stopwords.npy -v data/Split_Dataset/Data/Valid/relish_val_tokens_removed_stopwords.npy -t data/Split_Dataset/Data/Test/relish_test_tokens_removed_Stopwords.npy -gv data/Split_Dataset/Ground_truth/valid_split.tsv -gt data/Split_Dataset/Ground_truth/test_split.tsv -c 2
+ ``` 
