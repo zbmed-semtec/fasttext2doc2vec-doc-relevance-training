@@ -108,7 +108,7 @@ deactivate
 - Download the dataset from this link: [Split_Dataset](https://drive.google.com/drive/folders/1Bq_U5207utn7tvSt_HLVdOdYR5QW7MMN)
 - Keep the data in the below-specified format
 
-![image](/docs/dataset_structure.png)
+![image](docs/dataset_structure.png)
 
 ### Step 4: Optimization Pipeline
 
