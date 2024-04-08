@@ -30,7 +30,7 @@ This section outlines the progression from generating document embeddings to con
 The following section outlines the process of generating document-level embeddings for each PMID of the RELISH corpus using either the pre-trained fastText model or by training our own fastText models. We employ the parameters shown below in order to generate our models.
 
 ### Train and Optimize fastText models
-We create and train Doc2Vec models with customizable hyperparameters to comprehend the connections between documents and words in a high-dimensional vector space. We aim to optimize these hyperparameters to establish the most effective relationship between cosine similarity and document relevance.
+We create and train fastText models with customizable hyperparameters to comprehend the connections between documents and words in a high-dimensional vector space. We aim to optimize these hyperparameters to establish the most effective relationship between cosine similarity and document relevance.
 
 To accomplish this we begin by splitting the dataset into a training set and a testing set. The training set is then used to train the fastText model, where we explore various hyperparameters to optimize its performance. This optimization process is crucial for enhancing the model's ability to capture meaningful relationships between cosine similarity and document relevance. For each set of hyperparameters, a fastText model is trained on the training split.
 
