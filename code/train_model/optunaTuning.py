@@ -50,13 +50,29 @@ def objective_wrapper(args):
         return precision_5
     return objective
 
-def run_optuna_optimization(args, n_trials=10, n_jobs=1):
+def delete_files_except(directory, prefix_to_keep):
+    for file_name in os.listdir(directory):
+        if not file_name.startswith(prefix_to_keep):
+            os.remove(os.path.join(directory, file_name))
+
+def run_optuna_optimization(args, n_trials=100, n_jobs=2):
     study = optuna.create_study(direction='maximize', pruner=optuna.pruners.MedianPruner())
+    trials_per_deletion = 10
+    trials_counter = 0
+
     with tqdm(total=n_trials) as pbar:
         def callback(study, trial):
+            nonlocal trials_counter
             pbar.update(1)
+            trials_counter += 1
             if trial.state == optuna.trial.TrialState.PRUNED:
                 logging.info("Trial {} pruned.".format(trial.number))  # Log pruned trial
+            if trials_counter % trials_per_deletion == 0 or trial.number == n_trials - 1:
+                delete_files_except(f"output_{args.classes}", f"cosine_similarity_{study.best_trial.number}")
+                delete_files_except(f"embeddings_{args.classes}", f"embedding_{study.best_trial.number}")
+                delete_files_except(f"models_{args.classes}", f"fastText_model_{study.best_trial.number}")
+                trials_counter = 0
+        
         study.optimize(objective_wrapper(args), n_trials=n_trials, callbacks=[callback], n_jobs=n_jobs)
     print('Best trial:', study.best_trial.params)
     logging.info('Best trial: %s', study.best_trial.params)

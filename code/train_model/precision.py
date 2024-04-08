@@ -85,7 +85,7 @@ def generate_vector(ref_pmids: list, data: pd.DataFrame, classes: int) -> np.arr
         Generated precision vector.
     """
     value_of_n = 5
-    ref_pmids_filtered = [pmid for pmid in ref_pmids if len(data[data['PID1'] == pmid]) >= value_of_n]
+    ref_pmids_filtered = [pmid for pmid in ref_pmids if len(data[data['PID1'] == pmid]) >= 20]
     precision_vector = np.empty(shape=(len(ref_pmids_filtered), 1))
     for pmid_index, pmid in enumerate(ref_pmids_filtered):
         sorted_collection = sort_collection(pmid, data)
