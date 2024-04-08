@@ -145,12 +145,12 @@ python3 code/train_model/main.py [-i INPUT] [-v VALIDATION_FILE] [-t TEST_FILE] 
 
  You must pass the following four arguments:
 
--i/ --input : File path to the RELISH Train split dataset (.npy file format).
--v/ --valid : File path to the RELISH Validation split dataset (.npy file format).
--t/ --test : File path to the RELISH Test split dataset (.npy file format).
--gv/ --valid_ground_truth : File path for the Validation split ground truth (.tsv file format).
--gt/ --test_ground_truth : File path for the Test split ground truth (.tsv file format).
--c/ --classes : No. of classes to perform optimization on (Integer 2 or 3/ Default value is 3).
++ -i/ --input : File path to the RELISH Train split dataset (.npy file format).
++ -v/ --valid : File path to the RELISH Validation split dataset (.npy file format).
++ -t/ --test : File path to the RELISH Test split dataset (.npy file format).
++ -gv/ --valid_ground_truth : File path for the Validation split ground truth (.tsv file format).
++ -gt/ --test_ground_truth : File path for the Test split ground truth (.tsv file format).
++ -c/ --classes : No. of classes to perform optimization on (Integer 2 or 3/ Default value is 3).
 
 To run this script, please execute the following command:
 
