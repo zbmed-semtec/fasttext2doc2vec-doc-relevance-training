@@ -16,7 +16,7 @@ def run(best_params, args, tuning=False, save_model=False):
     end = time.time()
     logging.info(f"Time taken to train the model: {end - start} seconds")
     logging.info("RELISH fastText Model Generated")
-    logging.info(model, "Model is being used.")
+    logging.info("Model is being used.")
 
     # 3) Set the validation/test data to be used based on tuning parameter
     if tuning:
