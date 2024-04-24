@@ -4,81 +4,52 @@ import argparse
 import logging
 import utilities as utilities
 
-log_file = "fastText_train.log"
-logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(levelname)s: %(message)s')
+def run(best_params, args, tuning=False, save_model=False):
 
-def run(best_params, args, trial, tuning):
-    # Load the training data
+    # 1) Load the training data
     train_pmids, train_docs = utilities.process_data_from_npy(args.input)
-    print("Retrieved RELISH Cleaned Data")
     logging.info("Retrieved RELISH Cleaned Data")
 
-    # Define a directory for storing models
-    models_directory = f"models_{args.classes}"
-    if not os.path.exists(models_directory):
-        os.makedirs(models_directory)
-
+    # 2) Train the model with 80% of the data and best parameters
     start = time.time()
-    # Train the model with 80% of the data and best parameters
     model = utilities.create_fasttext_model(train_pmids, train_docs, best_params)
     end = time.time()
-
-    print(f"Time taken to train the model: {end - start} seconds")
     logging.info(f"Time taken to train the model: {end - start} seconds")
-    print("RELISH fastText Model Generated")
     logging.info("RELISH fastText Model Generated")
-    
+    logging.info(model, "Model is being used.")
 
-    model_file = f"fastText_model_{trial}"
-    model_file = os.path.join(models_directory, model_file)
-    utilities.save_model(model, model_file)
-    logging.info("RELISH fastText Model Saved")
-
-    print(model, "Model is being used.")
-
-    if tuning == True:
-        print("Validation Split is being used")
-        logging.info("Validation Split is being used")
-        # use validation dataset for tuning
-        test_pmids, test_docs = utilities.process_data_from_npy(args.valid)
+    # 3) Set the validation/test data to be used based on tuning parameter
+    if tuning:
+        dataset_type = "Validation"
+        data_file = args.valid
+        ground_truth = args.valid_ground_truth
     else:
-        print("Test Split is being used")
-        logging.info("Test Split is being used")
-        # use test dataset for final evaluation
-        test_pmids, test_docs = utilities.process_data_from_npy(args.test)
+        dataset_type = "Test"
+        data_file = args.test
+        ground_truth = args.test_ground_truth
 
-    # Define a directory for storing embeddings
-    embeddings_directory = f"embeddings_{args.classes}"
-    if not os.path.exists(embeddings_directory):
-        os.makedirs(embeddings_directory)
+    # 4) Load the data from npy file
+    pmids, docs = utilities.process_data_from_npy(data_file)
+    logging.info(f"Retrieved RELISH Cleaned {dataset_type} Data")
 
-        
-    embedding_file = f"embedding_{trial}.pkl"
-    embeddings_file = os.path.join(embeddings_directory, embedding_file)
+   # 5) Generate the embeddings: pd.DataFrame for loaded docs
+    embeddings_df = utilities.create_document_embeddings(model, pmids, docs)
+    logging.info(f"RELISH {dataset_type} Embeddings Pickle File Generated.")
 
-    # Generate the embeddings
-    utilities.create_document_embeddings(test_pmids, test_docs, model, embeddings_file)
-    print("RELISH Embeddings Pickle File Saved")
-    logging.info("RELISH Embeddings Pickle File Saved")
+    # 6) Generate the cosine similarity matrix: pd.DataFrame for the generated embeddings
+    similarity_df = utilities.get_similarity_scores(ground_truth, embeddings_df)
+    logging.info(f"RELISH {dataset_type} Cosine Similarity Matrix Generated.")
 
-    # Define the directory for storing similarity results
-    output_directory = f"output_{args.classes}"
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
+     # 7) If the dataset type is "Test", then save the dataframes to a file each
+    if dataset_type=='Test':
+        embeddings_file = f"output_{args.classes}/embeddings/test_embeddings_{args.classes}.pkl"
+        similarity_file = f"output_{args.classes}/evaluation/test_cosine_similarity_{args.classes}.tsv"
+        utilities.save_embeddings_to_pickle(embeddings_df, embeddings_file)
+        utilities.save_similarity_to_tsv(similarity_df, similarity_file)
 
-    # Generate and save the cosine similarity matrix
-    similarity_filename = f"cosine_similarity_{trial}.tsv"
-    similarity_file = os.path.join(output_directory, similarity_filename)
-    if tuning == True:
-        print("Validation Ground Truth is being used")
-        logging.info("Validation Ground Truth is being used")
-        utilities.get_similarity_scores(args.valid_ground_truth, embeddings_file, similarity_file)
-    else:
-        print("Test Ground Truth is being used")
-        logging.info("Test Ground Truth is being used")
-        utilities.get_similarity_scores(args.test_ground_truth, embeddings_file, similarity_file)
+    # 8) Save the model in the given path if specified
+    if save_model:
+        model_file = f"output_{args.classes}/model/fastText_model_{args.classes}"
+        utilities.save_model(model, model_file)
 
-    print("RELISH Cosine Similarity Matrix Saved")
-    logging.info("RELISH Cosine Similarity Matrix Saved")
-
-    return similarity_file
+    return similarity_df, embeddings_df, model

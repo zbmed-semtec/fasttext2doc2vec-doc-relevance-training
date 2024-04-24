@@ -7,10 +7,7 @@ from gensim.models import FastText
 from typing import Union, List
 import logging
 
-log_file = 'fastText_utilities.log'
-logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(levelname)s: %(message)s')
 
-# Retrieves cleaned data from RELISH and TREC npy files
 def process_data_from_npy(file_path_in: str = None) -> Union[List[str], List[List[str]], List[List[str]], List[List[str]]]:
     """
     Retrieves cleaned data from RELISH and TREC npy files, separating each column 
@@ -97,25 +94,59 @@ def save_model(model: FastText, output_file: str) -> None:
     """
     model.save(output_file)
     
-def calculate_cosine_similarity(vec1, vec2):
-    return 1 - cosine(vec1, vec2)
+def calculate_cosine_similarity(vector_1: np.ndarray, vector_2: np.ndarray) -> float:
+    """
+    Calculate the cosine similarity between two vectors.
 
-def get_similarity_scores(input_relevance_matrix, embeddings, output_matrix_name):
-    # Read Embeddings
+    This function computes the cosine similarity, which is defined as 1 minus the cosine distance 
+    between two vectors. Cosine similarity is a measure of similarity between two non-zero vectors
+    of an inner product space that measures the cosine of the angle between them.
+
+    Parameters:
+    ----------
+    vector_1 : np.ndarray
+        A numpy array representing the first vector.
+    vector_2 : np.ndarray
+        A numpy array representing the second vector.
+
+    Returns:
+    -------
+    float
+        The cosine similarity between vector_1 and vector_2.
+    """
+    return 1 - cosine(vector_1, vector_2)
+
+def get_similarity_scores(input_relevance_matrix: str, embeddings_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate cosine similarity scores for pairs of PubMed IDs based on their embeddings and update a DataFrame with these scores.
+
+    Parameters:
+    ----------
+    input_relevance_matrix : str
+        File path to the TSV file containing pairs of PubMed IDs and a relevance value.
+    embeddings_df : pd.DataFrame
+        DataFrame containing PubMed IDs and their corresponding document embeddings.
+
+    Returns:
+    -------
+    relevance_matrix_df : pd.DataFrame
+        Updated DataFrame with cosine similarity scores added for each pair.
+    """
+    # 1) Read Embeddings
     embeddings_df = pd.read_pickle(embeddings)
 
     logging.info("Embeddings DataFrame Loaded")
     
-    # Read Relevance matrix
+    # 2) Read Relevance matrix
     column_names = ["PID1", "PID2", "Value"]
     relevance_matrix_df = pd.read_csv(input_relevance_matrix, sep="\t", names = column_names, skiprows=1)
 
-    # Adds empty columns to the file to store similarity scores
+    # 3) Adds empty columns to the file to store similarity scores
     relevance_matrix_df["Cosine Similarity"] = ""
     
     embeddings_dict = {int(pmid): embedding for pmid, embedding in zip(embeddings_df['PID'], embeddings_df['Embedding'])}
 
-    # Create a list of ref and assessed PMID pairs
+    # 4) Create a list of ref and assessed PMID pairs
     pmid_pairs = list(zip(relevance_matrix_df["PID1"], relevance_matrix_df["PID2"]))
 
     for ref_pmid, assessed_pmid in tqdm.tqdm(pmid_pairs, total=len(pmid_pairs), desc="Calculating Similarities"):
@@ -131,13 +162,22 @@ def get_similarity_scores(input_relevance_matrix, embeddings, output_matrix_name
             logging.info(f"\nKeyError: {e}, ref_pmid: {ref_pmid}, assessed_pmid: {assessed_pmid}")
             break
 
-    print('Added similarity scores')
-    
-    # Saves the updated matrix 
-    relevance_matrix_df.to_csv(output_matrix_name, index=False, sep="\t")
-    logging.info('Saved matrix')
+    return relevance_matrix_df
 
-def create_document_embeddings(pmids: list, documents: list, model, output_dir_path: str) -> None:
+def save_similarity_to_tsv(df: pd.DataFrame, output_file: str) -> None:
+    """
+    Save the DataFrame containing similarity scores to a TSV file.
+
+    Parameters:
+    ----------
+    df : pd.DataFrame
+        DataFrame to be saved, containing similarity scores among other data.
+    output_file : str
+        The file path where the DataFrame will be saved as a TSV.
+    """
+    df.to_csv(output_file, index=False, sep="\t")
+
+def create_document_embeddings(pmids: list, documents: list, model: FastText) -> None:
     """
     Generates document embeddings from the generated fastText model.
     Parameters
@@ -178,10 +218,21 @@ def create_document_embeddings(pmids: list, documents: list, model, output_dir_p
             document[doc_dimension] = (dimension / len(embeddings_list))
             doc_dimension += 1
         document_embeddings.append(document)
-    save_embeddings_to_pickle(pmids, document_embeddings, output_dir_path)
 
-def save_embeddings_to_pickle(pmids, embeddings_list, output_file):
-    data = {"PID": pmids, "Embedding": embeddings_list}
-    df = pd.DataFrame(data)
+    data = {"PMID": pmids, "Embedding": document_embeddings}
+    embeddings_df = pd.DataFrame(data)
+    embeddings_df = embeddings_df.sort_values("PMID")
+    return embeddings_df
+
+def save_embeddings_to_pickle(df: pd.DataFrame, output_file: str) -> None:
+    """
+    Save the DataFrame containing document embeddings to a pickle file.
+
+    Parameters:
+    ----------
+    df : pd.DataFrame
+        DataFrame containing embeddings to be saved.
+    output_file : str
+        The file path where the DataFrame will be saved in pickle format.
+    """
     df.to_pickle(output_file)
-    print(f"Embeddings saved to {output_file}")
