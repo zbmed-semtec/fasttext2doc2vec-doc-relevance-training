@@ -33,7 +33,7 @@ def run(best_params, args, tuning=False, save_model=False):
     logging.info(f"Retrieved RELISH Cleaned {dataset_type} Data")
 
    # 5) Generate the embeddings: pd.DataFrame for loaded docs
-    embeddings_df = utilities.create_document_embeddings(model, pmids, docs)
+    embeddings_df = utilities.create_document_embeddings(pmids, docs, model)
     logging.info(f"RELISH {dataset_type} Embeddings Pickle File Generated.")
 
     # 6) Generate the cosine similarity matrix: pd.DataFrame for the generated embeddings
