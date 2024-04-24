@@ -132,22 +132,18 @@ def get_similarity_scores(input_relevance_matrix: str, embeddings_df: pd.DataFra
     relevance_matrix_df : pd.DataFrame
         Updated DataFrame with cosine similarity scores added for each pair.
     """
-    # 1) Read Embeddings
-    embeddings_df = pd.read_pickle(embeddings)
-
-    logging.info("Embeddings DataFrame Loaded")
-    
-    # 2) Read Relevance matrix
-    column_names = ["PID1", "PID2", "Value"]
+  
+    # 1) Read Relevance matrix
+    column_names = ["PMID1", "PMID2", "Value"]
     relevance_matrix_df = pd.read_csv(input_relevance_matrix, sep="\t", names = column_names, skiprows=1)
 
-    # 3) Adds empty columns to the file to store similarity scores
+    # 2) Adds empty columns to the file to store similarity scores
     relevance_matrix_df["Cosine Similarity"] = ""
     
-    embeddings_dict = {int(pmid): embedding for pmid, embedding in zip(embeddings_df['PID'], embeddings_df['Embedding'])}
+    embeddings_dict = {int(pmid): embedding for pmid, embedding in zip(embeddings_df['PMID'], embeddings_df['Embedding'])}
 
-    # 4) Create a list of ref and assessed PMID pairs
-    pmid_pairs = list(zip(relevance_matrix_df["PID1"], relevance_matrix_df["PID2"]))
+    # 3) Create a list of ref and assessed PMID pairs
+    pmid_pairs = list(zip(relevance_matrix_df["PMID1"], relevance_matrix_df["PMID2"]))
 
     for ref_pmid, assessed_pmid in tqdm.tqdm(pmid_pairs, total=len(pmid_pairs), desc="Calculating Similarities"):
         try:
@@ -155,7 +151,7 @@ def get_similarity_scores(input_relevance_matrix: str, embeddings_df: pd.DataFra
             assessed_pmid_vector = embeddings_dict[assessed_pmid]
             if ref_pmid_vector is not None and assessed_pmid_vector is not None:
                 cosine_similarity = round(calculate_cosine_similarity(ref_pmid_vector, assessed_pmid_vector), 4)
-                relevance_matrix_df.loc[(relevance_matrix_df['PID1'] == ref_pmid) & (relevance_matrix_df['PID2'] == assessed_pmid), 'Cosine Similarity'] = cosine_similarity
+                relevance_matrix_df.loc[(relevance_matrix_df['PMID1'] == ref_pmid) & (relevance_matrix_df['PMID2'] == assessed_pmid), 'Cosine Similarity'] = cosine_similarity
             else:
                 logging.info(f"One of the vectors is None for ({ref_pmid}, {assessed_pmid})")
         except KeyError as e:
