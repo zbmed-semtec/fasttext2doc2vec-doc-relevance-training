@@ -1,4 +1,4 @@
-sudo pip install gdown
+pip install gdown
 cd data
 
 mkdir -p Split_Dataset/Data
