@@ -66,7 +66,8 @@ def objective_wrapper(args):
         window = trial.suggest_int('window', 5, 15)
         min_count = trial.suggest_int('min_count', 1, 5)
         epochs = trial.suggest_int('epochs', 5, 15)
-        workers = 8 # Always set to 8 
+        workers = 8 # Always set to 8
+        seed = 42 
 
         # 2) Use args here as needed, e.g., args.input, args.test
         params = {
@@ -75,7 +76,8 @@ def objective_wrapper(args):
             "window": window,
             "min_count": min_count,
             "epochs": epochs,
-            "workers": workers
+            "workers": workers,
+            "seed": seed
         }
 
         # 3) run(): Trains the model with specified parameters and returns similarity scores, embeddings, and the trained model itself.
@@ -126,13 +128,12 @@ def objective_wrapper(args):
         return precision_5
     return objective
 
-def run_optuna_optimization(args, log_file=None , n_trials=10, n_jobs=1):
+def run_optuna_optimization(args, n_trials=10, n_jobs=1):
     """
     Runs an Optuna optimization process.
 
     Parameters:
         args: Various configuration and running parameters for the optimization.
-        log_file (str, optional): Path to a log file where results should be recorded. Default is None.
         n_trials (int, optional): The number of trials to conduct. Default is 10.
         n_jobs (int, optional): The number of jobs to run in parallel. Default is 1.
 
@@ -141,6 +142,11 @@ def run_optuna_optimization(args, log_file=None , n_trials=10, n_jobs=1):
     """
 
     # 1) Define the log file to log the results
+    log_directory = f"output_{args.classes}"
+    if not os.path.exists(log_directory):
+        os.makedirs(log_directory)
+
+    log_file = f"output_{args.classes}/Optuna_trials_{args.classes}.log"
     logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(levelname)s: %(message)s')
 
     # 2) Define the SQLite storage backend for the study

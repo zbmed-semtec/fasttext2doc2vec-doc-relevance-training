@@ -47,7 +47,7 @@ if __name__ == "__main__":
     os.chmod(results_directory, permissions)
 
     # 5) Define the file paths to store the evaluation results
-    log_file = os.path.join(results_directory,f"fastText_optuna_{args.classes}.log")
+    # log_file = os.path.join(results_directory,f"fastText_optuna_{args.classes}.log")
     precision_file = os.path.join(results_directory, f"precision_{args.classes}.tsv")
     dcg_file = os.path.join(results_directory, f"dcg_{args.classes}.tsv")
     idcg_file = os.path.join(results_directory, f"idcg_{args.classes}.tsv")
@@ -58,12 +58,12 @@ if __name__ == "__main__":
     if args.windows:
         from optunaTuningWindows import run_optuna_optimization
         start = time.time()
-        best_params, best_trial = run_optuna_optimization(args, log_file=log_file, n_trials=100, n_jobs=2)
+        best_params, best_trial = run_optuna_optimization(args, n_trials=100, n_jobs=2)
         print("Finished optuna optimization. Time taken:", time.time()-start)
     else:
         from optunaTuningUnix import run_optuna_optimization
         start = time.time()
-        best_params, best_trial = run_optuna_optimization(args, log_file=log_file, n_trials=100, n_jobs=2)
+        best_params, best_trial = run_optuna_optimization(args, n_trials=100, n_jobs=2)
         print("Finished optuna optimization. Time taken:", time.time()-start)
 
     # 7) Define the file paths to store the similarity file based on optuna trial run results

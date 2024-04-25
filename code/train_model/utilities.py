@@ -154,6 +154,7 @@ def get_similarity_scores(input_relevance_matrix: str, embeddings_df: pd.DataFra
                 relevance_matrix_df.loc[(relevance_matrix_df['PMID1'] == ref_pmid) & (relevance_matrix_df['PMID2'] == assessed_pmid), 'Cosine Similarity'] = cosine_similarity
             else:
                 logging.info(f"One of the vectors is None for ({ref_pmid}, {assessed_pmid})")
+                continue
         except KeyError as e:
             logging.info(f"\nKeyError: {e}, ref_pmid: {ref_pmid}, assessed_pmid: {assessed_pmid}")
             break
