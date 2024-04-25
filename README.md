@@ -92,7 +92,7 @@ To confirm if the virtual environment is activated and check the location of you
 which python    # On Windows command prompt, use 'where python'
                 # On Windows PowerShell, use 'Get-Command python'
 ```
-The code is stable with python 3.6 and higher. The required python packages are listed in the requirements.txt file. To install the required packages, run the following command:
+The code is stable with python 3.9 and higher. The required python packages are listed in the requirements.txt file. To install the required packages, run the following command:
 
 ```
 pip install -r requirements.txt
@@ -103,10 +103,22 @@ To deactivate the virtual environment after running the project, run the followi
 ```
 deactivate
 ```
+
 ### Step 3: Dataset
 
-- Download the dataset from this link: [Split_Dataset](https://drive.google.com/drive/folders/1Bq_U5207utn7tvSt_HLVdOdYR5QW7MMN)
-- Keep the data in the below-specified format
+
+- Use the [Download_Data.sh](./Download_Data.sh) script to download the Split Dataset by running the following commands:
+
+```
+chmod +777 Download_Data.sh
+./Download_Data.sh
+```
+This script makes sure that the necessary folders are created and the files are downloaded in the corresponding folders.
+
+**OR**
+
+
+- You could also download the dataset from this link: [Split_Dataset](https://drive.google.com/drive/folders/1Bq_U5207utn7tvSt_HLVdOdYR5QW7MMN). Please make sure to keep the data in the below specified format.
 
 ```
 📦 /fasttext2doc2vec-doc-relevance-training
@@ -130,17 +142,17 @@ deactivate
 This pipeline aims to optimize hyperparameters for a fastText model using Optuna, train the model with the optimal parameters, and evaluate its performance using precision at N (Precision@N) and normalized discounted cumulative gain (NDCG) metrics.
 
 Pipeline Steps:
-Hyperparameter Optimization: Utilizes Optuna to search for the best hyperparameters for the fastText model.
-Model Training: Trains the fastText model with the optimal hyperparameters using 80% of the training split data.
-Embedding Generation: Generates embeddings for the remaining 20% of the test split data using the trained model.
-Cosine Similarity Computation: Calculates cosine similarities for the generated embeddings.
-Precision@N Calculation: Computes Precision@N scores, a measure of the relevance of retrieved documents, for the obtained cosine similarities.
-NDCG Score Calculation: Computes normalized discounted cumulative gain (NDCG) scores, which assesses the quality of ranked search results based on relevance assessments.
++ Hyperparameter Optimization: Utilizes Optuna to search for the best hyperparameters for the fastText model.
++ Model Training: Trains the fastText model with the optimal hyperparameters using 80% of the training split data.
++ Embedding Generation: Generates embeddings for the remaining 20% of the test split data using the trained model.
++ Cosine Similarity Computation: Calculates cosine similarities for the generated embeddings.
++ Precision@N Calculation: Computes Precision@N scores, a measure of the relevance of retrieved documents, for the obtained cosine similarities.
++ NDCG Score Calculation: Computes normalized discounted cumulative gain (NDCG) scores, which assesses the quality of ranked search results based on relevance assessments.
 
 In order to start the pipeline execution use this script, and run the following command:
 
  ``` 
-python3 code/train_model/main.py [-i INPUT] [-v VALIDATION_FILE] [-t TEST_FILE] [-gv VALIDATION_GROUND_TRUTH] [-gt TEST_GROUND_TRUTH] [-c NO_OF CLASSES]
+python3 code/train_model/main.py [-i INPUT] [-v VALIDATION_FILE] [-t TEST_FILE] [-gv VALIDATION_GROUND_TRUTH] [-gt TEST_GROUND_TRUTH] [-c NO_OF CLASSES] [-win WINDOWS/LINUX]
  ``` 
 
  You must pass the following four arguments:
@@ -151,9 +163,22 @@ python3 code/train_model/main.py [-i INPUT] [-v VALIDATION_FILE] [-t TEST_FILE] 
 + -gv/ --valid_ground_truth : File path for the Validation split ground truth (.tsv file format).
 + -gt/ --test_ground_truth : File path for the Test split ground truth (.tsv file format).
 + -c/ --classes : No. of classes to perform optimization on (Integer 2 or 3/ Default value is 3).
++ -win/ --windows : 1 - if using Windows systems; 0 - if using Unix-like systems (including Ubuntu)
 
 To run this script, please execute the following command:
 
  ``` 
-python3 code/train_model/main.py -i data/Split_Dataset/Data/Train/relish_train_tokens_removed_stopwords.npy -v data/Split_Dataset/Data/Valid/relish_val_tokens_removed_stopwords.npy -t data/Split_Dataset/Data/Test/relish_test_tokens_removed_Stopwords.npy -gv data/Split_Dataset/Ground_truth/valid_split.tsv -gt data/Split_Dataset/Ground_truth/test_split.tsv -c 2
+python3 code/train_model/main.py -i data/Split_Dataset/Data/train.npy -v data/Split_Dataset/Data/valid.npy -t data/Split_Dataset/Data/test.npy -gv data/Split_Dataset/Groundtruth/valid.tsv -gt data/Split_Dataset/Groundtruth/test.tsv -c 3 -win 0
  ``` 
+
+Precision@N and NDCG scores are saved as TSV files in the following folder path: `\output_2\evaluation\`  for 2 class distribution and `\output_3\evaulation\` for 3 class distribution for further analysis and reporting.
+
+Make sure to run the model training twice for both the class distributions by changing the value of the -c/ --classes flag to 2 and 3.
+
+**NOTE:** As of now, we use the test file as our validation dataset during the model training. Make sure to replace the validation dataset with the truth dataset as well as validation groundtruth file with the test groundtruth file.
+
+For replacing the validation data with the test data, please execute the following command:
+
+``` 
+python3 code/train_model/main.py -i data/Split_Dataset/Data/train.npy -v data/Split_Dataset/Data/test.npy -t data/Split_Dataset/Data/test.npy -gv data/Split_Dataset/Groundtruth/test.tsv -gt data/Split_Dataset/Groundtruth/test.tsv -c 3 -win 0
+``` 
