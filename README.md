@@ -168,7 +168,7 @@ python3 code/train_model/main.py [-i INPUT] [-v VALIDATION_FILE] [-t TEST_FILE] 
 To run this script, please execute the following command:
 
  ``` 
-python3 code/train_model/main.py -i data/Split_Dataset/Data/train.npy -v data/Split_Dataset/Data/valid.npy -t data/Split_Dataset/Data/test.npy -gv data/Split_Dataset/Groundtruth/valid.tsv -gt data/Split_Dataset/Groundtruth/test.tsv -c 3 -win 0
+python3 code/train_model/main.py -i data/Split_Dataset/Data/train.npy -v data/Split_Dataset/Data/valid.npy -t data/Split_Dataset/Data/test.npy -gv data/Split_Dataset/Ground_truth/valid.tsv -gt data/Split_Dataset/Ground_truth/test.tsv -c 3 -win 0
  ``` 
 
 Precision@N and NDCG scores are saved as TSV files in the following folder path: `\output_2\evaluation\`  for 2 class distribution and `\output_3\evaulation\` for 3 class distribution for further analysis and reporting.
@@ -180,5 +180,5 @@ Make sure to run the model training twice for both the class distributions by ch
 For replacing the validation data with the test data, please execute the following command:
 
 ``` 
-python3 code/train_model/main.py -i data/Split_Dataset/Data/train.npy -v data/Split_Dataset/Data/test.npy -t data/Split_Dataset/Data/test.npy -gv data/Split_Dataset/Groundtruth/test.tsv -gt data/Split_Dataset/Groundtruth/test.tsv -c 3 -win 0
+python3 code/train_model/main.py -i data/Split_Dataset/Data/train.npy -v data/Split_Dataset/Data/test.npy -t data/Split_Dataset/Data/test.npy -gv data/Split_Dataset/Ground_truth/test.tsv -gt data/Split_Dataset/Ground_truth/test.tsv -c 3 -win 0
 ``` 
