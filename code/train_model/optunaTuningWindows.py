@@ -134,7 +134,6 @@ def run_optuna_optimization(args, n_trials=10, n_jobs=1):
 
     Parameters:
         args: Various configuration and running parameters for the optimization.
-        log_file (str, optional): Path to a log file where results should be recorded. Default is None.
         n_trials (int, optional): The number of trials to conduct. Default is 10.
         n_jobs (int, optional): The number of jobs to run in parallel. Default is 1.
 
@@ -169,7 +168,7 @@ def run_optuna_optimization(args, n_trials=10, n_jobs=1):
         restored_sampler = pickle.load(open(sampler_file, "rb"))
         print('Loading the existing study sampler!')
     except:
-        restored_sampler = None
+        restored_sampler = optuna.samplers.TPESampler(seed=42)
 
     # 4) Load the existing study or create a new one
     study = optuna.create_study(direction='maximize', study_name="fastText_tuning", 

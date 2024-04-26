@@ -58,12 +58,14 @@ if __name__ == "__main__":
     if args.windows:
         from optunaTuningWindows import run_optuna_optimization
         start = time.time()
-        best_params, best_trial = run_optuna_optimization(args, n_trials=100, n_jobs=2)
+        # NOTE: FOR OPTUNA HYPERPARAMETER REPRODUCIBILITY n_jobs should always be 1
+        best_params, best_trial = run_optuna_optimization(args, n_trials=100, n_jobs=1)
         print("Finished optuna optimization. Time taken:", time.time()-start)
     else:
         from optunaTuningUnix import run_optuna_optimization
         start = time.time()
-        best_params, best_trial = run_optuna_optimization(args, n_trials=100, n_jobs=2)
+        # NOTE: FOR OPTUNA HYPERPARAMETER REPRODUCIBILITY n_jobs should always be 1
+        best_params, best_trial = run_optuna_optimization(args, n_trials=100, n_jobs=1)
         print("Finished optuna optimization. Time taken:", time.time()-start)
 
     # 7) Define the file paths to store the similarity file based on optuna trial run results
