@@ -157,7 +157,6 @@ def get_similarity_scores(input_relevance_matrix: str, embeddings_df: pd.DataFra
                 continue
         except KeyError as e:
             logging.info(f"\nKeyError: {e}, ref_pmid: {ref_pmid}, assessed_pmid: {assessed_pmid}")
-            break
 
     return relevance_matrix_df
 

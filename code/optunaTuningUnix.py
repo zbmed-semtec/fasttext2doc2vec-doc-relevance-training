@@ -1,8 +1,8 @@
 import os
 
-import msvcrt # For Windows systems
+import fcntl # For Unix-like systems (including Ubuntu)
 '''
-By properly implementing file locking mechanisms like using msvcrt for Windows systems, 
+By properly implementing file locking mechanisms like using fcntl for Unix-like systems, 
 one can ensure that the Optuna optimization process runs smoothly without encountering 
 race conditions or file locking issues, even when using multiple processes (n_jobs > 1).
 '''
@@ -11,8 +11,8 @@ import threading
 # Define a lock for synchronization
 precision_lock = threading.Lock()
 
-import pickle
 import optuna
+import pickle
 import logging
 import argparse
 import numpy as np
@@ -33,12 +33,12 @@ def save_data_with_lock(file_path, data, save_function):
     with open(file_path, "w") as lock_file:
         try:
             # Lock the file to prevent other processes from modifying it simultaneously.
-            msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 0)
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
             # Save the data to the file.
             save_function(data, file_path)
         finally:
             # Always unlock the file when done, ensuring the file is not left in a locked state.
-            msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 0)
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 def save_model_data(args, model, embeddings, similarity):
 
@@ -60,13 +60,13 @@ def save_model_data(args, model, embeddings, similarity):
 def objective_wrapper(args):
     def objective(trial):
 
-        # 1) Suggest hyperparameters for Doc2Vec
+        # 1) Suggest hyperparameters for fastText
         sg = trial.suggest_int('sg', 0, 1)
         vector_size = trial.suggest_int('vector_size', 100, 500, step=50)
         window = trial.suggest_int('window', 5, 15)
-        min_count = trial.suggest_int('min_count', 1, 5)
+        min_count = trial.suggest_int('min_count', 1, 3)
         epochs = trial.suggest_int('epochs', 5, 15)
-        workers = 8 # Always set to 8
+        workers = 1 # Always set to 1
         seed = 42 
 
         # 2) Use args here as needed, e.g., args.input, args.test
