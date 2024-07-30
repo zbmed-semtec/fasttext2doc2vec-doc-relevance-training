@@ -9,7 +9,7 @@ import precision
 import calculate_gain
 
 print("Current directory")
-print(os.get_cwd())
+print(os.getcwd())
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
