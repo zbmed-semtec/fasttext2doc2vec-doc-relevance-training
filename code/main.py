@@ -8,6 +8,9 @@ import utilities
 import precision
 import calculate_gain
 
+print("Current directory")
+print(os.get_cwd())
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", help="Path to input (train) file")
