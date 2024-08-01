@@ -21,7 +21,7 @@ def run(best_params, args, save_model=False):
     # 3) Set the test data to be used based on tuning parameter
     dataset_type = "Test"
     data_file = args.test
-    ground_truth = args.test_ground_truth
+    ground_truth = args.ground_truth
 
     # 4) Load the data from npy file
     pmids, docs = utilities.process_data_from_npy(data_file)
