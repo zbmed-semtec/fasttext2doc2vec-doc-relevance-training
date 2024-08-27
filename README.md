@@ -177,7 +177,7 @@ You must pass the following four arguments:
 To run this script, please execute the following command:
 
 ``` 
-python3 code/main.py -i data/Split_Dataset/Data/train.npy -t data/Split_Dataset/Data/test.npy -gt data/Split_Dataset/Ground_truth/test.tsv -c 3 -win 0
+python3 code/main.py -i data/Split_Dataset/Data/train.npy -t data/Split_Dataset/Data/test.npy -g data/Split_Dataset/Ground_truth/test.tsv -c 3 -win 0
  ``` 
 
 Precision@N and NDCG scores are saved to TSV files in the following folder path: \output_2 (2 classes) and \output_3 (3 classes) for further analysis and reporting.
