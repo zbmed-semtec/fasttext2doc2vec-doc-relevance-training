@@ -1,11 +1,12 @@
 import tqdm
 import gensim
+import logging
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import cosine
-from gensim.models import FastText
 from typing import Union, List
-import logging
+from gensim.models import FastText
+from scipy.spatial.distance import cosine
+from gensim.models.fasttext import load_facebook_model
 
 
 def process_data_from_npy(file_path_in: str = None) -> Union[List[str], List[List[str]], List[List[str]], List[List[str]]]:
@@ -55,6 +56,17 @@ def process_data_from_npy(file_path_in: str = None) -> Union[List[str], List[Lis
         docs.append(title_tokens + abstract_tokens)
         
     return (pmids, docs)
+
+def load_pretrained_model(model_filepath: str):
+    """
+    Loads the pre-trained model.
+    Parameters
+    ----------
+    model_filepath : str
+        Filepath of the downloaded pre-trained model.
+    """    
+    model = load_facebook_model(model_filepath)
+    return model
 
 def create_fasttext_model(pmids: List[str], docs: List[List[str]], params: dict) -> FastText:
     """
