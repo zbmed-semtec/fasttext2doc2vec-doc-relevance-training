@@ -185,7 +185,7 @@ def save_similarity_to_tsv(df: pd.DataFrame, output_file: str) -> None:
     """
     df.to_csv(output_file, index=False, sep="\t")
 
-def create_document_embeddings(pmids: list, documents: list, model: FastText) -> None:
+def create_document_embeddings(pmids: list, documents: list, model: FastText, pre_trained: int) -> None:
     """
     Generates document embeddings from the generated fastText model.
     Parameters
@@ -195,19 +195,26 @@ def create_document_embeddings(pmids: list, documents: list, model: FastText) ->
     documents : list
         List of function comments.
     model : 
-        Pretraine Fasttext model.
-    output_dir_path: str
-        File path for the generated embeddings.
+        Pretrain Fasttext model.
+    pre_trained: int
+        Whether to use a pre-trained model or not.
     """
     document_embeddings = []
 
     for index in range(len(pmids)):
         embeddings_list = []
-        for word in documents[index]:
-            try:
-                embeddings_list.append(model.wv[word])
-            except:
-                continue
+        if pre_trained==1:
+            for word in documents[index]:
+                try:
+                    embeddings_list.append(model[word])
+                except:
+                    continue
+        else:
+            for word in article_doc[iteration]:
+                try:
+                    embedding_list.append(model.wv[word])
+                except:
+                    continue
         #  Generate document embeddings from word embeddings
         first = True
         document = []
