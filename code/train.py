@@ -23,7 +23,7 @@ def run(best_params, args):
     logging.info(f"Retrieved RELISH Cleaned Validation Data")
 
     # 4) Generate the embeddings: pd.DataFrame for loaded docs
-    val_embeddings_df = utilities.create_document_embeddings(val_pmids, val_docs, model)
+    val_embeddings_df = utilities.create_document_embeddings(val_pmids, val_docs, model, args.pre_trained)
     logging.info(f"RELISH Validation Embeddings Pickle File Generated.")
 
     # 5) Generate the cosine similarity matrix: pd.DataFrame for the generated embeddings
