@@ -210,7 +210,7 @@ def create_document_embeddings(pmids: list, documents: list, model: FastText, pr
                 except:
                     continue
         else:
-            for word in article_doc[iteration]:
+            for word in documents[index]:
                 try:
                     embedding_list.append(model.wv[word])
                 except:
