@@ -1,5 +1,4 @@
 import os
-
 import fcntl # For Unix-like systems (including Ubuntu)
 '''
 By properly implementing file locking mechanisms like using fcntl for Unix-like systems, 
@@ -43,9 +42,9 @@ def save_data_with_lock(file_path, data, save_function):
 def save_model_data(args, model, embeddings, similarity):
 
     # 1) Define the file path to save the model data
-    model_file = f"output_{args.classes}/model/fastText_best_model_{args.classes}"
-    embeddings_file = f"output_{args.classes}/embeddings/best_embeddings_{args.classes}.pkl"
-    similarity_file = f"output_{args.classes}/evaluation/best_cosine_similarity_{args.classes}.tsv"
+    model_file = f"output_{args.classes}/validation/fastText_best_model_{args.classes}"
+    embeddings_file = f"output_{args.classes}/validation/valid_embeddings_{args.classes}.pkl"
+    similarity_file = f"output_{args.classes}/validation/valid_cosine_similarity_{args.classes}.tsv"
 
     # 2) Save the model
     save_data_with_lock(model_file, model, utilities.save_model)
@@ -57,20 +56,25 @@ def save_model_data(args, model, embeddings, similarity):
     save_data_with_lock(similarity_file, similarity, utilities.save_similarity_to_tsv)
 
 
-def objective_wrapper(args):
+def objective_wrapper(args, params):
+
     def objective(trial):
 
         # 1) Suggest hyperparameters for fastText
-        sg = trial.suggest_int('sg', 0, 1)
-        vector_size = trial.suggest_int('vector_size', 100, 500, step=50)
-        window = trial.suggest_int('window', 5, 15)
-        min_count = trial.suggest_int('min_count', 1, 3)
-        epochs = trial.suggest_int('epochs', 5, 15)
-        workers = 1 # Always set to 1
-        seed = 42 
+        sg = trial.suggest_int('sg', *params['sg']['values'])
+        vector_size = trial.suggest_int(
+            'vector_size',
+            params['vector_size']['values'][0], 
+            params['vector_size']['values'][1],
+            step=params['vector_size'].get('step', 1))
+        window = trial.suggest_int('window', *params['window']['values'])
+        min_count = trial.suggest_int('min_count', *params['min_count']['values'])
+        epochs = trial.suggest_int('epochs', *params['epochs']['values'])
+        workers = params['workers']['value'] # Always set to 1
+        seed = params['seed']['value']  # Fixed seed
 
         # 2) Use args here as needed, e.g., args.input, args.test
-        params = {
+        params_dict = {
             "sg": sg,
             "vector_size": vector_size,
             "window": window,
@@ -81,12 +85,7 @@ def objective_wrapper(args):
         }
 
         # 3) run(): Trains the model with specified parameters and returns similarity scores, embeddings, and the trained model itself.
-        similarity_df, embeddings_df, model = run(params, args, tuning = True, save_model=False) 
-        """
-            NOTE: The 'tuning' parameter dictates the dataset split used during the model run:
-            - If 'tuning' is set to True, the Validation split is used for model tuning.
-            - If 'tuning' is set to False, the Test split is utilized, typically for final evaluation.
-        """
+        similarity_df, embeddings_df, model = run(params_dict, args) 
 
         # 4) Compute precision@5 for all the reference pmids
         ref_pmids = similarity_df["PMID1"].unique()
@@ -128,13 +127,14 @@ def objective_wrapper(args):
         return precision_5
     return objective
 
-def run_optuna_optimization(args, n_trials=10, n_jobs=1):
+def run_optuna_optimization(args, params, n_trials, n_jobs=1):
     """
     Runs an Optuna optimization process.
 
     Parameters:
         args: Various configuration and running parameters for the optimization.
-        n_trials (int, optional): The number of trials to conduct. Default is 10.
+        params (dict): Hyperparameter configurations for the model.
+        n_trials (int): The number of trials to conduct.
         n_jobs (int, optional): The number of jobs to run in parallel. Default is 1.
 
     Returns:
@@ -196,7 +196,7 @@ def run_optuna_optimization(args, n_trials=10, n_jobs=1):
             pbar.update(1)
             callback(study, trial)
         
-        study.optimize(objective_wrapper(args), n_trials=n_trials, callbacks=[pbar_callback], n_jobs=n_jobs)
+        study.optimize(objective_wrapper(args, params), n_trials, callbacks=[pbar_callback], n_jobs=n_jobs)
 
     # 7) Save the study state
     study.trials_dataframe().to_csv(f"output_{args.classes}/optuna_study_state_{args.classes}.csv")

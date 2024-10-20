@@ -1,11 +1,12 @@
 import tqdm
 import gensim
+import logging
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import cosine
-from gensim.models import FastText
 from typing import Union, List
-import logging
+from gensim.models import FastText
+from scipy.spatial.distance import cosine
+from gensim.models.fasttext import load_facebook_model
 
 
 def process_data_from_npy(file_path_in: str = None) -> Union[List[str], List[List[str]], List[List[str]], List[List[str]]]:
@@ -55,6 +56,17 @@ def process_data_from_npy(file_path_in: str = None) -> Union[List[str], List[Lis
         docs.append(title_tokens + abstract_tokens)
         
     return (pmids, docs)
+
+def load_pretrained_model(model_filepath: str):
+    """
+    Loads the pre-trained model.
+    Parameters
+    ----------
+    model_filepath : str
+        Filepath of the downloaded pre-trained model.
+    """    
+    model = load_facebook_model(model_filepath)
+    return model
 
 def create_fasttext_model(pmids: List[str], docs: List[List[str]], params: dict) -> FastText:
     """
@@ -173,7 +185,7 @@ def save_similarity_to_tsv(df: pd.DataFrame, output_file: str) -> None:
     """
     df.to_csv(output_file, index=False, sep="\t")
 
-def create_document_embeddings(pmids: list, documents: list, model: FastText) -> None:
+def create_document_embeddings(pmids: list, documents: list, model: FastText, pre_trained: int) -> None:
     """
     Generates document embeddings from the generated fastText model.
     Parameters
@@ -183,19 +195,26 @@ def create_document_embeddings(pmids: list, documents: list, model: FastText) ->
     documents : list
         List of function comments.
     model : 
-        Pretraine Fasttext model.
-    output_dir_path: str
-        File path for the generated embeddings.
+        Pretrain Fasttext model.
+    pre_trained: int
+        Whether to use a pre-trained model or not.
     """
     document_embeddings = []
 
     for index in range(len(pmids)):
         embeddings_list = []
-        for word in documents[index]:
-            try:
-                embeddings_list.append(model.wv[word])
-            except:
-                continue
+        if pre_trained==1:
+            for word in documents[index]:
+                try:
+                    embeddings_list.append(model[word])
+                except:
+                    continue
+        else:
+            for word in article_doc[iteration]:
+                try:
+                    embedding_list.append(model.wv[word])
+                except:
+                    continue
         #  Generate document embeddings from word embeddings
         first = True
         document = []
