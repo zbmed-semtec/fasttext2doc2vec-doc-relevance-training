@@ -28,7 +28,7 @@ def run_pretrained(args, model_directory):
         return
 
     # 3) Load the data from npy file
-    test_pmids, test_docs = utilities.process_data_from_npy(data_file)
+    test_pmids, test_docs = utilities.process_data_from_npy(args.test)
     logging.info(f"Retrieved RELISH Cleaned Test Data")
 
     # 4) Generate the embeddings: pd.DataFrame for loaded docs
