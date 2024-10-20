@@ -206,7 +206,7 @@ def create_document_embeddings(pmids: list, documents: list, model: FastText, pr
         if pre_trained==1:
             for word in documents[index]:
                 try:
-                    embeddings_list.append(model[word])
+                    embeddings_list.append(model.wv[word])
                 except:
                     continue
         else:
