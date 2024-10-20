@@ -126,7 +126,7 @@ if __name__ == "__main__":
         test_pmids, test_docs = utilities.process_data_from_npy(args.test)
             
         # 11) Generate the embeddings: pd.DataFrame for loaded docs
-        test_embeddings_df = utilities.generate_document_embeddings(model, test_pmids, test_docs)
+        test_embeddings_df = utilities.create_document_embeddings(model, test_pmids, test_docs, args.use_pretrained)
 
         # 12) Save the embeddings to a pickle file
         test_embedding_file = os.path.join(embeddings_directory, f"test_embeddings_{args.classes}.pkl")
