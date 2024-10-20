@@ -32,7 +32,7 @@ def run_pretrained(args, model_directory):
     logging.info(f"Retrieved RELISH Cleaned Test Data")
 
     # 4) Generate the embeddings: pd.DataFrame for loaded docs
-    test_embeddings_df = utilities.create_document_embeddings(test_pmids, test_docs, model, args.pretrained)
+    test_embeddings_df = utilities.create_document_embeddings(test_pmids, test_docs, model, args.use_pretrained)
     logging.info(f"RELISH Test Embeddings Pickle File Generated.")
 
     # 5) Generate the cosine similarity matrix: pd.DataFrame for the generated embeddings
