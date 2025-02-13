@@ -186,58 +186,122 @@ def save_similarity_to_tsv(df: pd.DataFrame, output_file: str) -> None:
     df.to_csv(output_file, index=False, sep="\t")
 
 def create_document_embeddings(pmids: list, documents: list, model: FastText, pre_trained: int) -> None:
-    """
-    Generates document embeddings from the generated fastText model.
+    '''
+    Generates document embeddings from a titles and abstracts in a given paper using fastText and calculating the cenroids of all given word embeddings.
+    If no gensim model is given, the 'glove-wiki-gigaword-200' gensim model is used.
+
     Parameters
     ----------
-    accessions : list
-        List of accession numbers.
-    documents : list
-        List of function comments.
-    model : 
-        Pretrain Fasttext model.
-    pre_trained: int
-        Whether to use a pre-trained model or not.
-    """
+    pmids: list of str
+        The list of all pmids which are processed.
+    documents: list of list of str
+        A two dimensional list of all tokenized article documents (title + abstract).
+    gensim_model_path: str (optional)
+        The filepath of the custom gensimModel.
+    '''
+    total_missing_words = 0
+    total_unique_set_missing_words = []
+    word_count = 0
+    missing_words = 0
+    iteration = 0
     document_embeddings = []
-
-    for index in range(len(pmids)):
-        embeddings_list = []
+    for iteration in range(len(pmids)):
+        missing_words = 0
+        # Retrieve word embeddings.
+        embedding_list = []
         if pre_trained==1:
-            for word in documents[index]:
+            for word in documents[iteration]:
+                word_count += 1
                 try:
-                    embeddings_list.append(model[word])
+                    embedding_list.append(model[word])
                 except:
-                    continue
+                    missing_words += 1
         else:
-            for word in article_doc[iteration]:
+            for word in documents[iteration]:
+                word_count += 1
                 try:
                     embedding_list.append(model.wv[word])
                 except:
-                    continue
-        #  Generate document embeddings from word embeddings
-        first = True
-        document = []
-        for embedding in embeddings_list:
-            if first:
-                for dimension in embedding:
-                    document.append(0.0)
-                first = False
-            doc_dimension = 0
-            for dimension in embedding:
-                document[doc_dimension] += dimension
-                doc_dimension += 1
-        doc_dimension = 0
-        for dimension in document:
-            # Get the average of each dimension of the embeddings and store it in the document list
-            document[doc_dimension] = (dimension / len(embeddings_list))
-            doc_dimension += 1
+                    missing_words += 1
+        word_count = 0
+        # Generate document embeddings from word embeddings using word-vector centroids.
+        logging.info(f"OOV words for {pmids[iteration]}: {missing_words} from a total of {word_count} words")
+        
+        if len(embedding_list) == 0:
+            logging.info(f"No word embeddings found for this document: {iteration} , {pmids[iteration]}")
+            # This can be caused by a high min-count parameter or missing vocabulary when using a pretrained model
+            document_embeddings.append([])
+            continue
+        
+        document = [0.0] * model.vector_size
+
+        for dim in range(model.vector_size):
+            for word_embeddings in embedding_list:
+                document[dim] += word_embeddings[dim]
+            document[dim] = document[dim] / len(embedding_list)
         document_embeddings.append(document)
 
+    logging.info(f"Total missing words: {total_missing_words} and total unique words: {len(set(total_unique_set_missing_words))}")
+    
+    
     data = {"PMID": pmids, "Embedding": document_embeddings}
     embeddings_df = pd.DataFrame(data)
     embeddings_df = embeddings_df.sort_values("PMID")
     return embeddings_df
+
+# def create_document_embeddings(pmids: list, documents: list, model: FastText, pre_trained: int) -> None:
+#     """
+#     Generates document embeddings from the generated fastText model.
+#     Parameters
+#     ----------
+#     accessions : list
+#         List of accession numbers.
+#     documents : list
+#         List of function comments.
+#     model : 
+#         Pretrain Fasttext model.
+#     pre_trained: int
+#         Whether to use a pre-trained model or not.
+#     """
+#     document_embeddings = []
+
+#     for index in range(len(pmids)):
+#         embeddings_list = []
+#         if pre_trained==1:
+#             for word in documents[index]:
+#                 try:
+#                     embeddings_list.append(model.wv[word])
+#                 except:
+#                     continue
+#         else:
+#             for word in documents[index]:
+#                 try:
+#                     embedding_list.append(model.wv[word])
+#                 except:
+#                     continue
+#         #  Generate document embeddings from word embeddings
+#         first = True
+#         document = []
+#         for embedding in embeddings_list:
+#             if first:
+#                 for dimension in embedding:
+#                     document.append(0.0)
+#                 first = False
+#             doc_dimension = 0
+#             for dimension in embedding:
+#                 document[doc_dimension] += dimension
+#                 doc_dimension += 1
+#         doc_dimension = 0
+#         for dimension in document:
+#             # Get the average of each dimension of the embeddings and store it in the document list
+#             document[doc_dimension] = (dimension / len(embeddings_list))
+#             doc_dimension += 1
+#         document_embeddings.append(document)
+
+#     data = {"PMID": pmids, "Embedding": document_embeddings}
+#     embeddings_df = pd.DataFrame(data)
+#     embeddings_df = embeddings_df.sort_values("PMID")
+#     return embeddings_df
 
 def save_embeddings_to_pickle(df: pd.DataFrame, output_file: str) -> None:
     """
@@ -251,3 +315,20 @@ def save_embeddings_to_pickle(df: pd.DataFrame, output_file: str) -> None:
         The file path where the DataFrame will be saved in pickle format.
     """
     df.to_pickle(output_file)
+
+def loadModel(model_path: str) -> None:
+    """
+    Loads the saved FastText model.
+
+    Parameters
+    ----------
+    model_path: str
+            Path of the FastText model.
+
+    Return
+    ----------
+    model: FastText
+            FastText model.
+    """
+    model = gensim.models.FastText.load(model_path)
+    return model

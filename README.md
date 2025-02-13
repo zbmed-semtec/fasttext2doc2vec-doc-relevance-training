@@ -1,19 +1,29 @@
-# FastText2Doc2Vec-Doc-relevance
+# FastText2Doc2Vec-Doc-relevance-training
 
 This repository focuses on an approach exploring and assessing literature-based doc-2-doc recommendations using the fastText algorithm with its application to the RELISH dataset.  The dataset used is the RELISH Corpus, an expert-curated collection of biomedical literature consisting of pairwise document assessments. The workflow involves training the fastText models on a specified training set and then evaluating the document-to-document recommendations on a separate test set. Additionally, we employ Optuna for optimizing the hyperparameters for the trained fastText models.
 
 ## 📚🔍 Table of Contents
 
-1. [About](#📝about)
-2. [Input Data](#📂input-data)
-3. [Pipeline](#🛠️pipeline)
-    1. [Train and Optimize fastText models](#🧠⚙️train-and-optimize-fasttext-models)
-    2. [Calculate Cosine Similarity](#📐🔄calculate-cosine-similarity)
-    3. [Evaluation](#📈📋-evaluation)
-        - [Precision@N](#🎯precisionn)
-        - [nDCG@N](#📊-ndcgn)
-4. [Code Impelementation](#🧑‍💻🧩-code-implementation🧩)
-5. [Getting Started](#🚀getting-started)
+- [FastText2Doc2Vec-Doc-relevance-training](#fasttext2doc2vec-doc-relevance-training)
+  - [📚🔍 Table of Contents](#-table-of-contents)
+  - [📝About](#about)
+  - [📂Input Data](#input-data)
+  - [🛠️Pipeline](#️pipeline)
+    - [🧠⚙️Train and Optimize fastText models](#️train-and-optimize-fasttext-models)
+        - [Parameters](#parameters)
+  - [💾⚙️Utilizing a Pre-trained Model](#️utilizing-a-pre-trained-model)
+  - [📐🔄Calculate Cosine Similarity](#calculate-cosine-similarity)
+  - [📈📋 Evaluation](#-evaluation)
+    - [🎯Precision@N](#precisionn)
+    - [📊 nDCG@N](#-ndcgn)
+  - [🧑‍💻🧩 Code Implementation](#-code-implementation)
+  - [🚀Getting Started](#getting-started)
+    - [Step 1: Clone the Repository](#step-1-clone-the-repository)
+          - [Using HTTP:](#using-http)
+          - [Using SSH:](#using-ssh)
+    - [Step 2: Create a virtual environment and install dependencies](#step-2-create-a-virtual-environment-and-install-dependencies)
+    - [Step 3: Dataset](#step-3-dataset)
+    - [Step 4: Optimization Pipeline](#step-4-optimization-pipeline)
 
 ## 📝About
 
@@ -22,9 +32,9 @@ Our approach employs [FastText](https://fasttext.cc/docs/en/support.htm) to gene
 ## 📂Input Data
 The input data for this method includes preprocessed tokens derived from the RELISH documents, a specialized database curated by experts for benchmarking document similarity in biomedical literature. The RELISH dataset comprises a JSON file containing PubMed IDs (PMIDs) along with document-to-document relevance assessments categorized as "relevant," "partial," or "irrelevant." Titles and abstracts of the associated articles were retrieved and stored in a TSV file. 
 
-The title and abstract text are preprocessed, and the resulting tokens are stored in the RELISH.npy file, which includes arrays of PMIDs, document titles, and abstracts. Within this preprocessing pipeline, both the title and abstract texts undergo several stages of refinement: stop words and structural words are eliminated, the text is converted to lowercase, and finally, tokenization is employed, resulting in arrays of individual words and is detailed in the [relish-preprocessing repository](https://github.com/zbmed-semtec/relish-preprocessing). The resulting preprocessed tokens are divided into training and test sets based on specific criteria detailed [here](https://github.com/zbmed-semtec/relish-preprocessing?tab=readme-ov-file#splitting-the-data). These splits are then saved as two separate .npy files.
+The title and abstract text are preprocessed, and the resulting tokens are stored in the RELISH.npy file, which includes arrays of PMIDs, document titles, and abstracts. Within this preprocessing pipeline, both the title and abstract texts undergo several stages of refinement: stop words and structural words are eliminated, the text is converted to lowercase, and finally, tokenization is employed, resulting in arrays of individual words and is detailed in the [relish-preprocessing repository](https://github.com/zbmed-semtec/relish-preprocessing). The resulting preprocessed tokens are divided into training, validation and test sets based on specific criteria detailed [here](https://github.com/zbmed-semtec/relish-preprocessing?tab=readme-ov-file#splitting-the-data). These splits are then saved as two separate .npy files.
 
-Additionally, the ground truth relevance assessments are used to evaluate the accuracy of the doc-2-doc recommendations, ensuring that the method's results align with expert judgments.
+Additionally, the ground truth relevance assessments are used to evaluate the accuracy of the doc-2-doc recommendations, ensuring that the method's results align with expert judgments. For this, we make use of the validation ground truth TSV file for hyperparameter optimization and the test ground truth TSV file for the final evaluation.
 
 ## 🛠️Pipeline
 
@@ -45,6 +55,9 @@ Following this, we evaluate the model's performance on the testing set using Pre
 + **epochs:** Refers to the number of iterations over the training dataseta and is set to vary from 5 to 15 in this context.
 + **min_count:** It is the minimum number of appearances a word must have to not be ignored by the algorithm and is configured at 1, 2 and 3 in our case.
 
+## 💾⚙️Utilizing a Pre-trained Model
+Additionaly, we leverage the pre-trained 'cc.en.300.bin.gz' fastText model trained on Common Crawl and Wikipedia. Using this model, we generate word level embeddings for the test dataset, calculate centroid of word embeddings to generate document level embeddings, compute cosine similarity between the embeddings and evaluate them using precision@N and nDCG@N metrics.
+
 ## 📐🔄Calculate Cosine Similarity
 
 Following hyperparameter optimization where the best model gets saved, embeddings are generated for the test dataset using this trained model. Subsequently, cosine similarity is calculated for the test dataset embeddings, providing a measure of similarity between pairs of documents based on their learned representations. This enables the generation of a 4-column matrix [ PMID1 | PMID2 | Relevance | Cosine similarity ] containing cosine similarity scores for existing pairs of PMIDs within our corpus. For a more detailed explanation of the process, please refer to this [documentation](https://github.com/zbmed-semtec/medline-preprocessing/tree/main/code/Cosine_Similarity).
@@ -64,11 +77,13 @@ Another metric used is the nDCG@N (normalized Discounted Cumulative Gain). This 
 
 ## 🧑‍💻🧩 Code Implementation
 
-+ The [`main.py`](code/main.py) serves as a comprehensive wrapper function, supporting the model generation, training, embedding generation, cosine similarity matrix calculation, precision calculation and gain calculation in one pipeline. Individual functions for each task are provided in the other scripts.
++ The [`main.py`](code/main.py) serves as a comprehensive wrapper function, supporting the model generation, training, embedding generation, cosine similarity matrix calculation, precision calculation and gain calculation in one pipeline and the final evaluation for the test dataset. Individual functions for each task are provided in the other scripts.
 
 + [`optunaTuningUnix.py`](code/optunaTuningUnix.py) / [`optunaTuningWindows.py`](code/optunaTuningWindows.py) : The code utilizes Optuna for hyperparameter optimization of fastText model. It suggests hyperparameters for fastText, trains models, evaluates precision@5, and selects the best trial. The optimization process iterates over several trials, updating progress with a progress bar. The scripts are designed to run the pipeline on either Unix or Windows systems.
 
 + [`train.py`](code/train.py): This script trains a fastText model using specified hyperparameters, saves the model if specified, generates embeddings for test data, computes cosine similarity scores, and saves them to a file. It logs progress to a file specified by log_file.
+
++ [`pretrained.py`](code/pretrained.py) This script uses the Pre-trained 'cc.en.300.bin.gz' model, generates embeddings and computes cosine similarity directly for the test dataset.
 
 + [`utilities.py`](code/utilities.py): This script includes functions for parsing and reading input tokens, creation and training of fastText models, generation of embeddings, centroid aggregation of word embeddings to generate document embeddings, calculation of cosine similarity, generation of similarity matrix.
 
@@ -143,9 +158,11 @@ This script makes sure that the necessary folders are created and the files are 
           ├─ Data
           │  ├─ train.npy
           │  ├─ test.npy
+          |  └─ valid.npy
           └─ Ground_truth
              ├─ train.tsv
-             └─ test.tsv
+             ├─ test.tsv
+             └─ valid.tsv
 ```
 
 ### Step 4: Optimization Pipeline
@@ -163,21 +180,26 @@ Pipeline Steps:
 In order to start the pipeline execution use this script, and run the following command:
 
 ``` 
-python3 code/main.py [-i INPUT TRAIN FILE] [-t TEST_FILE] [-g GROUND_TRUTH_FILE] [-c NO_OF CLASSES] [-win WINDOWS/LINUX]
+python3 code/main.py [-i INPUT_TRAIN_FILE] [-t TEST_FILE] [-v VALIDATION_FILE] [-gt TEST_GROUND_TRUTH_FILE] [-gv VALIDATION_GROUND_TRUTH_FILE]  [-u USE_PRE_TRAINED_MODEL] [-c NO_OF CLASSES] [-win WINDOWS/LINUX]
  ``` 
 
 You must pass the following four arguments:
 
 + -i/ --input : File path to the RELISH Train split dataset (.npy file format).
-+ -t/ --test :  File path to the RELISH Test split dataset (.npy file format).
-+ -g/ --ground_truth : File path for the Test split ground truth (.tsv file format).
+-t/ --test : File path to the RELISH Test split dataset (.npy file format).
+-v/ --valid: File path to the RELISH Validation split dataset (.npy file format).
+-gt/ --test_ground_truth : File path for the Test split ground truth (.tsv file format).
+-gv/ --valid_ground_truth : File path for the Validation split ground truth (.tsv file format).
+-u/ --use_pretrained : This is an optional parameter whether to use a pretrained fastText model. 1 - if yes; 0 - if no.
 + -c/  --classes : No. of classes to perform optimization on (Integer 2 or 3/ Default value is 3)
 + -win/ --windows : 1- if using Windows systems; 0- if using Unix-like systems (including Ubuntu)
 
 To run this script, please execute the following command:
 
 ``` 
-python3 code/main.py -i data/Split_Dataset/Data/train.npy -t data/Split_Dataset/Data/test.npy -g data/Split_Dataset/Ground_truth/test.tsv -c 3 -win 0
+python3 code/main.py -i data/Split_Dataset/Data/train.npy -t data/Split_Dataset/Data/test.npy -v data/Split_Dataset/Data/valid.npy -gt data/Split_Dataset/Ground_truth/test.tsv -gv data/Split_Dataset/Ground_truth/valid.tsv -c 3 -win 0
  ``` 
 
 Precision@N and NDCG scores are saved to TSV files in the following folder path: \output_2 (2 classes) and \output_3 (3 classes) for further analysis and reporting.
+
+Make sure to run the model training twice for both the class distributions by changing the value of the -c/ --classes flag to 2 and 3.
