@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15095937.svg)](https://doi.org/10.5281/zenodo.15095937)
+
 # FastText2Doc2Vec-Doc-relevance-training
 
 This repository focuses on an approach exploring and assessing literature-based doc-2-doc recommendations using the fastText algorithm with its application to the RELISH dataset.  The dataset used is the RELISH Corpus, an expert-curated collection of biomedical literature consisting of pairwise document assessments. The workflow involves training the fastText models on a specified training set and then evaluating the document-to-document recommendations on a separate test set. Additionally, we employ Optuna for optimizing the hyperparameters for the trained fastText models.
